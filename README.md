@@ -21,15 +21,15 @@ Este guia detalha os passos para a implantação inicial e as atualizações fut
 
 Antes de começar, garanta que seu servidor Ubuntu 24.04 já possui:
 
-1.  **Apache2** instalado e configurado como proxy reverso (conforme instruções anteriores).
+1.  **Apache2** instalado e configurado como proxy reverso.
 2.  **Node.js** (preferencialmente via `nvm`) e **PM2** (`npm install pm2 -g`) instalados.
-3.  **MariaDB** instalado e um banco de dados (`gestao_servicos`) + usuário (`gestao_user`) criados para a aplicação.
+3.  **MariaDB** instalado e um banco de dados (`gestao_servicos`) + usuário (`gestao_user`) criados.
 4.  **Git** instalado.
 5.  O diretório `/var/www/gestao-v6` criado e com as permissões corretas para o seu usuário.
 
 ---
 
-### ภาค 1: Primeira Implantação (Setup Inicial)
+### Parte 1: Primeira Implantação (Setup Inicial)
 
 Siga estes passos **apenas na primeira vez** para colocar o projeto no ar.
 
@@ -45,57 +45,68 @@ cd /var/www/gestao-v6
 git clone https://github.com/thiagopagani/gestao-v6.git .
 ```
 
-#### Passo 2: Configurar o Backend
+#### Passo 2: Configurar o Backend (Arquivo `.env`)
 
-Configure as variáveis de ambiente para conectar o backend ao banco de dados.
+O arquivo `.env` armazena as senhas e configurações sensíveis do backend. Ele não é enviado para o GitHub por segurança. Vamos criá-lo no servidor.
 
 ```bash
 # Navegue para a pasta do backend
 cd backend
 
-# Copie o arquivo de exemplo para criar seu arquivo de configuração
-cp .env.example .env
-
-# Edite o arquivo .env com suas credenciais reais
-nano .env 
+# Crie e abra o arquivo .env com o editor nano
+nano .env
 ```
-Dentro do editor `nano`, altere a `DB_PASSWORD` para a senha que você definiu para o usuário `gestao_user` no MariaDB e salve (`Ctrl+X`, `Y`, `Enter`).
+
+Agora, **copie o bloco de texto abaixo e cole-o** dentro do editor `nano`:
+
+```ini
+# Server Configuration
+PORT=3000
+
+# Database Configuration
+DB_HOST=localhost
+DB_USER=gestao_user
+DB_PASSWORD=TeckapiFer2025
+DB_NAME=gestao_servicos
+DB_DIALECT=mariadb
+```
+
+Pressione `Ctrl + X`, depois `Y` e `Enter` para salvar e sair.
 
 #### Passo 3: Instalar Dependências e Fazer o Build
 
-Instale as dependências para o frontend e backend, e depois gere a versão de produção do frontend.
+Instale as dependências para o frontend e backend, e depois gere a versão de produção do frontend que será exibida aos usuários.
 
 ```bash
 # Volte para a raiz do projeto
 cd /var/www/gestao-v6
 
 # Instale as dependências do frontend (lê o package.json da raiz)
-echo "Instalando dependências do Frontend..."
+echo ">>> Instalando dependências do Frontend..."
 npm install
 
 # Instale as dependências do backend
-echo "Instalando dependências do Backend..."
-cd backend && npm install && cd ..
+echo ">>> Instalando dependências do Backend..."
+(cd backend && npm install)
 
 # Execute o script de build para gerar os arquivos estáticos na pasta `dist/`
-echo "Gerando build do Frontend..."
+echo ">>> Gerando build de produção do Frontend..."
 npm run build
 ```
-A pasta `dist/` é o que o Apache servirá ao público.
 
 #### Passo 4: Iniciar o Servidor Backend com PM2
 
-Use o PM2 para iniciar sua aplicação backend, garantindo que ela rode continuamente e reinicie em caso de falhas.
+Use o PM2 para iniciar sua aplicação backend. Ele garantirá que o servidor rode continuamente e reinicie automaticamente em caso de falhas.
 
 ```bash
 # Inicie o servidor, dando um nome ao processo para fácil gerenciamento
 pm2 start backend/server.js --name gestao-v6-backend
 
-# Configure o PM2 para iniciar automaticamente na inicialização do servidor
+# Configure o PM2 para iniciar junto com o servidor
 pm2 startup
-# (O PM2 fornecerá um comando para você copiar e colar. Execute-o!)
+# ATENÇÃO: O PM2 fornecerá um comando na tela. Copie e execute-o!
 
-# Salve a lista de processos atual para que o PM2 a restaure no boot
+# Salve a lista de processos para que o PM2 a restaure no boot
 pm2 save
 ```
 
@@ -103,13 +114,13 @@ pm2 save
 
 ---
 
-### 🔄 Parte 2: Fluxo de Atualização (Deploy Contínuo)
+### Parte 2: Fluxo de Atualização (Deploy Contínuo)
 
 Para todas as futuras atualizações da aplicação, o processo é muito mais simples.
 
 #### Passo 1: Preparar o Script de Deploy (Apenas uma vez)
 
-No seu servidor, mova o `deploy.sh` (que veio do repositório) para o diretório `/var/www/` e torne-o executável.
+No seu servidor, mova o `deploy.sh` (que veio do repositório) para `/var/www/` e torne-o executável.
 
 ```bash
 # Estando na pasta /var/www/gestao-v6
@@ -119,7 +130,7 @@ sudo chmod +x /var/www/deploy.sh
 
 #### Passo 2: Desenvolver e Enviar para o Git
 
-No seu **ambiente de desenvolvimento local**, faça as alterações necessárias, faça o commit e envie para o GitHub.
+No seu **ambiente de desenvolvimento local**, faça as alterações, crie um commit e envie para o GitHub.
 
 ```bash
 # Adicione suas alterações
@@ -134,11 +145,11 @@ git push origin main
 
 #### Passo 3: Executar o Deploy no Servidor
 
-Acesse seu servidor via SSH e execute o script de deploy.
+Acesse seu servidor via SSH e execute o script de deploy com um único comando.
 
 ```bash
 # Você pode estar em qualquer diretório para executar este comando
 sudo /var/www/deploy.sh
 ```
 
-O script fará todo o trabalho pesado: buscará o código novo do GitHub, reinstalará dependências, fará um novo build do frontend e reiniciará o backend sem tempo de inatividade.
+O script fará todo o trabalho: buscará o código novo, reinstalará dependências se necessário, fará um novo build do frontend e reiniciará o backend sem tempo de inatividade.
