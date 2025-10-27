@@ -1,0 +1,5 @@
+{
+  "name": "gestao-v6",
+  "description": "A comprehensive web application to manage contracting companies, clients, outsourced employees, and their daily work assignments. It includes a dashboard, reporting, and user management features.",
+  "requestFramePermissions": []
+}
