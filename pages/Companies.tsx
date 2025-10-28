@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Company, Status } from '../types/types';
 import { Plus, Edit, Trash2, Loader, AlertTriangle } from 'lucide-react';
