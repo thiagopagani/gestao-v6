@@ -8,7 +8,7 @@ const DailyRate = sequelize.define('DailyRate', {
     primaryKey: true,
   },
   date: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY, // Using DATEONLY to store only the date part
     allowNull: false,
   },
   value: {
@@ -20,7 +20,7 @@ const DailyRate = sequelize.define('DailyRate', {
     allowNull: false,
     defaultValue: 'Pendente',
   },
-  // Foreign Keys for Employee and Client will be added automatically
+  // Foreign Keys for Employee and Client will be added by associations
 }, {
   tableName: 'DailyRates',
   timestamps: true,
