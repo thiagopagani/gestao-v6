@@ -7,6 +7,7 @@ const Companies: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalError, setModalError] = useState<string | null>(null);
     const [newCompany, setNewCompany] = useState({
         name: '',
         cnpj: '',
@@ -18,6 +19,7 @@ const Companies: React.FC = () => {
     const fetchCompanies = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await fetch('/api/companies');
             if (!response.ok) {
                 throw new Error('Failed to fetch data from the server.');
@@ -43,9 +45,22 @@ const Companies: React.FC = () => {
         const { name, value } = e.target;
         setNewCompany(prevState => ({ ...prevState, [name]: value }));
     };
+    
+    const openAddModal = () => {
+        setNewCompany({
+            name: '',
+            cnpj: '',
+            contact: '',
+            phone: '',
+            status: Status.Active,
+        });
+        setModalError(null);
+        setIsModalOpen(true);
+    };
 
     const handleAddCompany = async (e: FormEvent) => {
         e.preventDefault();
+        setModalError(null);
         try {
             const response = await fetch('/api/companies', {
                 method: 'POST',
@@ -55,13 +70,17 @@ const Companies: React.FC = () => {
                 body: JSON.stringify(newCompany),
             });
             if (!response.ok) {
-                throw new Error('Failed to create company.');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create company.');
             }
             setIsModalOpen(false);
             fetchCompanies(); // Refresh the list
-        } catch (error) {
-            console.error("Error creating company:", error);
-            // Here you could set an error message for the modal
+        } catch (err) {
+            if (err instanceof Error) {
+                setModalError(err.message);
+            } else {
+                setModalError("An unknown error occurred while saving.");
+            }
         }
     };
 
@@ -138,7 +157,7 @@ const Companies: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Empresas Contratantes</h2>
-                    <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                    <button onClick={openAddModal} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
                         <Plus size={20} className="mr-2" />
                         Adicionar Empresa
                     </button>
@@ -157,6 +176,11 @@ const Companies: React.FC = () => {
                         </div>
                         <form onSubmit={handleAddCompany}>
                             <div className="p-6 space-y-4">
+                                {modalError && (
+                                     <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
+                                        {modalError}
+                                    </div>
+                                )}
                                 <div>
                                     <label htmlFor="name" className="block text-sm font-medium mb-1">Nome da Empresa</label>
                                     <input type="text" name="name" id="name" value={newCompany.name} onChange={handleInputChange} required className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
