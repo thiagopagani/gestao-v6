@@ -20,6 +20,14 @@ const mockEmployees = [
     { id: 4, name: 'Juliana Rocha', cpf: '444.555.666-77', phone: '(41) 96666-5555', type: 'Autônomo', status: 'Inativo' },
 ];
 
+const mockDailyRates = [
+    { id: 1, employeeId: 1, employeeName: 'Fernando Alves', clientId: 1, clientName: 'Projeto Alpha', companyName: 'Tech Solutions Ltda', date: '2024-07-28', value: 150.00, status: 'Pago' },
+    { id: 2, employeeId: 2, employeeName: 'Beatriz Costa', clientId: 2, clientName: 'Unidade Rio', companyName: 'Inova Corp', date: '2024-07-28', value: 200.50, status: 'Pago' },
+    { id: 3, employeeId: 3, employeeName: 'Lucas Martins', clientId: 1, clientName: 'Projeto Alpha', companyName: 'Tech Solutions Ltda', date: '2024-07-29', value: 120.00, status: 'Pendente' },
+    { id: 4, employeeId: 1, employeeName: 'Fernando Alves', clientId: 2, clientName: 'Unidade Rio', companyName: 'Inova Corp', date: '2024-07-30', value: 150.00, status: 'Pendente' },
+    { id: 5, employeeId: 1, employeeName: 'Fernando Alves', clientId: 2, clientName: 'Unidade Rio', companyName: 'Inova Corp', date: '2024-07-27', value: 150.00, status: 'Cancelado' },
+];
+
 
 // Test route to confirm API is working
 router.get('/test', (req, res) => {
@@ -39,6 +47,11 @@ router.get('/clients', (req, res) => {
 // Route for employees
 router.get('/employees', (req, res) => {
     res.json(mockEmployees);
+});
+
+// Route for daily rates
+router.get('/daily-rates', (req, res) => {
+    res.json(mockDailyRates);
 });
 
 module.exports = router;

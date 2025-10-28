@@ -10,10 +10,12 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.use('/api', apiRoutes);
+// The Apache proxy strips the '/api' prefix before forwarding the request.
+// We mount the router at the root ('/') so Express can handle the remaining path (e.g., '/companies').
+app.use('/', apiRoutes);
 
 // Health check route
-app.get('/', (req, res) => {
+app.get('/health', (req, res) => {
   res.send('Backend server is running.');
 });
 
