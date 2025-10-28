@@ -1,88 +1,34 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Company, Status } from '../types/types';
-import { Plus, Edit, Trash2, Loader, AlertTriangle, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader, AlertTriangle } from 'lucide-react';
 
 const Companies: React.FC = () => {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalError, setModalError] = useState<string | null>(null);
-    const [newCompany, setNewCompany] = useState({
-        name: '',
-        cnpj: '',
-        contact: '',
-        phone: '',
-        status: Status.Active,
-    });
-
-    const fetchCompanies = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await fetch('/api/companies');
-            if (!response.ok) {
-                throw new Error('Failed to fetch data from the server.');
-            }
-            const data: Company[] = await response.json();
-            setCompanies(data);
-        } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('An unknown error occurred.');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
 
     useEffect(() => {
+        const fetchCompanies = async () => {
+            try {
+                const response = await fetch('/api/companies');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data from the server.');
+                }
+                const data: Company[] = await response.json();
+                setCompanies(data);
+            } catch (err) {
+                if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError('An unknown error occurred.');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchCompanies();
     }, []);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setNewCompany(prevState => ({ ...prevState, [name]: value }));
-    };
-    
-    const openAddModal = () => {
-        setNewCompany({
-            name: '',
-            cnpj: '',
-            contact: '',
-            phone: '',
-            status: Status.Active,
-        });
-        setModalError(null);
-        setIsModalOpen(true);
-    };
-
-    const handleAddCompany = async (e: FormEvent) => {
-        e.preventDefault();
-        setModalError(null);
-        try {
-            const response = await fetch('/api/companies', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(newCompany),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create company.');
-            }
-            setIsModalOpen(false);
-            fetchCompanies(); // Refresh the list
-        } catch (err) {
-            if (err instanceof Error) {
-                setModalError(err.message);
-            } else {
-                setModalError("An unknown error occurred while saving.");
-            }
-        }
-    };
 
     const getStatusClass = (status: Status) => {
         return status === Status.Active 
@@ -107,10 +53,6 @@ const Companies: React.FC = () => {
                     <span>Erro ao carregar dados: {error}</span>
                 </div>
             );
-        }
-
-        if (companies.length === 0) {
-            return <p className="text-center text-gray-500 py-10">Nenhuma empresa encontrada. Adicione uma para começar.</p>;
         }
 
         return (
@@ -153,67 +95,16 @@ const Companies: React.FC = () => {
     };
 
     return (
-        <>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Empresas Contratantes</h2>
-                    <button onClick={openAddModal} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                        <Plus size={20} className="mr-2" />
-                        Adicionar Empresa
-                    </button>
-                </div>
-                {renderContent()}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Empresas Contratantes</h2>
+                <button className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                    <Plus size={20} className="mr-2" />
+                    Adicionar Empresa
+                </button>
             </div>
-
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg m-4">
-                        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-                            <h3 className="text-xl font-semibold">Adicionar Nova Empresa</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleAddCompany}>
-                            <div className="p-6 space-y-4">
-                                {modalError && (
-                                     <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
-                                        {modalError}
-                                    </div>
-                                )}
-                                <div>
-                                    <label htmlFor="name" className="block text-sm font-medium mb-1">Nome da Empresa</label>
-                                    <input type="text" name="name" id="name" value={newCompany.name} onChange={handleInputChange} required className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
-                                </div>
-                                <div>
-                                    <label htmlFor="cnpj" className="block text-sm font-medium mb-1">CNPJ</label>
-                                    <input type="text" name="cnpj" id="cnpj" value={newCompany.cnpj} onChange={handleInputChange} required className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
-                                </div>
-                                <div>
-                                    <label htmlFor="contact" className="block text-sm font-medium mb-1">Contato</label>
-                                    <input type="text" name="contact" id="contact" value={newCompany.contact} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
-                                </div>
-                                <div>
-                                    <label htmlFor="phone" className="block text-sm font-medium mb-1">Telefone</label>
-                                    <input type="text" name="phone" id="phone" value={newCompany.phone} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
-                                </div>
-                                <div>
-                                    <label htmlFor="status" className="block text-sm font-medium mb-1">Status</label>
-                                    <select name="status" id="status" value={newCompany.status} onChange={handleInputChange} className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                                        <option value={Status.Active}>Ativo</option>
-                                        <option value={Status.Inactive}>Inativo</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="flex justify-end p-4 border-t dark:border-gray-700">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 mr-3 rounded-md border dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">Salvar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </>
+            {renderContent()}
+        </div>
     );
 };
 

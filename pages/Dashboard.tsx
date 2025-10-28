@@ -1,4 +1,3 @@
-
 import React from 'react';
 import StatCard from '../components/StatCard';
 import { Building, Briefcase, Users, DollarSign } from 'lucide-react';
@@ -58,7 +57,6 @@ const Dashboard: React.FC = () => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                // FIX: The 'percent' prop can be undefined or non-numeric. Coalesce to 0 to prevent runtime errors.
                                 label={({ name, percent }) => `${name} ${((Number(percent) || 0) * 100).toFixed(0)}%`}
                             >
                                 {employeeTypeData.map((entry, index) => (
