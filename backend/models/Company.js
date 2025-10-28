@@ -1,10 +1,7 @@
-const { DataTypes, Model } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const { Status } = require('../../types/types');
 
-class Company extends Model {}
-
-Company.init({
+const Company = sequelize.define('Company', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -28,16 +25,13 @@ Company.init({
     allowNull: true,
   },
   status: {
-    type: DataTypes.ENUM(...Object.values(Status)),
-    defaultValue: Status.Active,
+    type: DataTypes.ENUM('Ativo', 'Inativo'),
     allowNull: false,
+    defaultValue: 'Ativo',
   },
 }, {
-  sequelize,
-  modelName: 'Company',
-  timestamps: true, // This will add createdAt and updatedAt fields
+  tableName: 'Companies',
+  timestamps: true,
 });
 
-// We need to export both the class and an object containing the class
-// for different import styles (require vs ES6 import)
-module.exports = { Company };
+module.exports = Company;

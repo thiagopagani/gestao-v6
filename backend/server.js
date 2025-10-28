@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/database');
 const apiRoutes = require('./routes/api');
-const Company = require('./models/Company'); // Import model to sync
+
+// Import models to ensure they are registered with Sequelize before sync
+require('./models/Company');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,9 +23,8 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log('Database connection has been established successfully.');
 
-        // Sync all models with the database.
-        // This will create tables if they don't exist.
-        await sequelize.sync();
+        // Sync all models. Using { alter: true } is safer for development as it tries to update tables without dropping them.
+        await sequelize.sync({ alter: true });
         console.log('All models were synchronized successfully.');
 
         app.listen(PORT, () => {
