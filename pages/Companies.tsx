@@ -1,34 +1,77 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, FormEvent } from 'react';
 import { Company, Status } from '../types/types';
-import { Plus, Edit, Trash2, Loader, AlertTriangle } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader, AlertTriangle, X } from 'lucide-react';
 
 const Companies: React.FC = () => {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [newCompany, setNewCompany] = useState({
+        name: '',
+        cnpj: '',
+        contact: '',
+        phone: '',
+        status: Status.Active,
+    });
+
+    const fetchCompanies = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await fetch('/api/companies');
+            if (!response.ok) {
+                throw new Error('Failed to fetch data from the server.');
+            }
+            const data: Company[] = await response.json();
+            setCompanies(data);
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('An unknown error occurred.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchCompanies = async () => {
-            try {
-                const response = await fetch('/api/companies');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data from the server.');
-                }
-                const data: Company[] = await response.json();
-                setCompanies(data);
-            } catch (err) {
-                if (err instanceof Error) {
-                    setError(err.message);
-                } else {
-                    setError('An unknown error occurred.');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchCompanies();
     }, []);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setNewCompany(prevState => ({ ...prevState, [name]: value }));
+    };
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/companies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCompany),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create company.');
+            }
+            
+            setIsModalOpen(false);
+            setNewCompany({ name: '', cnpj: '', contact: '', phone: '', status: Status.Active });
+            fetchCompanies(); // Refresh the list
+        } catch (err) {
+             if (err instanceof Error) {
+                alert(`Error: ${err.message}`);
+            } else {
+                alert('An unknown error occurred.');
+            }
+        }
+    };
+
 
     const getStatusClass = (status: Status) => {
         return status === Status.Active 
@@ -53,6 +96,10 @@ const Companies: React.FC = () => {
                     <span>Erro ao carregar dados: {error}</span>
                 </div>
             );
+        }
+        
+        if (companies.length === 0) {
+            return <p className="text-center p-10 text-gray-500">Nenhuma empresa cadastrada.</p>
         }
 
         return (
@@ -95,16 +142,60 @@ const Companies: React.FC = () => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Empresas Contratantes</h2>
-                <button className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                    <Plus size={20} className="mr-2" />
-                    Adicionar Empresa
-                </button>
+        <>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Empresas Contratantes</h2>
+                    <button onClick={() => setIsModalOpen(true)} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        <Plus size={20} className="mr-2" />
+                        Adicionar Empresa
+                    </button>
+                </div>
+                {renderContent()}
             </div>
-            {renderContent()}
-        </div>
+
+            {isModalOpen && (
+                 <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg m-4">
+                        <div className="flex justify-between items-center border-b pb-3 mb-4 dark:border-gray-700">
+                            <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Adicionar Nova Empresa</h3>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nome da Empresa</label>
+                                <input type="text" name="name" id="name" value={newCompany.name} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700" />
+                            </div>
+                             <div>
+                                <label htmlFor="cnpj" className="block text-sm font-medium text-gray-700 dark:text-gray-300">CNPJ</label>
+                                <input type="text" name="cnpj" id="cnpj" value={newCompany.cnpj} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700" />
+                            </div>
+                            <div>
+                                <label htmlFor="contact" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contato</label>
+                                <input type="text" name="contact" id="contact" value={newCompany.contact} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700" />
+                            </div>
+                             <div>
+                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefone</label>
+                                <input type="text" name="phone" id="phone" value={newCompany.phone} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700" />
+                            </div>
+                             <div>
+                                <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                                <select name="status" id="status" value={newCompany.status} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-white dark:bg-gray-700">
+                                    <option value={Status.Active}>Ativo</option>
+                                    <option value={Status.Inactive}>Inativo</option>
+                                </select>
+                            </div>
+                            <div className="flex justify-end pt-4 space-x-2">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500">Cancelar</button>
+                                <button type="submit" className="px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 
