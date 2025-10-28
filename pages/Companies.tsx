@@ -10,7 +10,6 @@ const Companies: React.FC = () => {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                // The Apache proxy will forward this request to http://localhost:3000/api/companies
                 const response = await fetch('/api/companies');
                 if (!response.ok) {
                     throw new Error('Failed to fetch data from the server.');
@@ -29,10 +28,12 @@ const Companies: React.FC = () => {
         };
 
         fetchCompanies();
-    }, []); // Empty dependency array means this effect runs once when the component mounts
+    }, []);
 
     const getStatusClass = (status: Status) => {
-        return status === Status.Active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        return status === Status.Active 
+            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     };
 
     const renderContent = () => {
@@ -59,7 +60,7 @@ const Companies: React.FC = () => {
                 <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th scope="col" className="px-6 py-3">Nome</th>
+                            <th scope="col" className="px-6 py-3">Nome da Empresa</th>
                             <th scope="col" className="px-6 py-3">CNPJ</th>
                             <th scope="col" className="px-6 py-3">Contato</th>
                             <th scope="col" className="px-6 py-3">Telefone</th>
