@@ -1,40 +1,48 @@
-require('dotenv').config();
+// Import required packages
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+
+// **CRUCIAL FIX**: Configure dotenv to find the .env file in the current directory
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+
 const sequelize = require('./config/database');
 const apiRoutes = require('./routes/api');
 
-// Import models to ensure they are registered with Sequelize before sync
-require('./models/Company');
-
+// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(express.json()); // To parse JSON bodies
 
-// API Routes
+// API Routes - All API calls are handled by this router
 app.use('/', apiRoutes);
 
-// Database connection and server start
+// Function to connect to DB and start the server
 const startServer = async () => {
-    try {
-        await sequelize.authenticate();
-        console.log('Database connection has been established successfully.');
+  try {
+    // Test the database connection
+    console.log('Attempting to connect to the database...');
+    await sequelize.authenticate();
+    console.log('Database connection has been established successfully.');
 
-        // Sync all models. Using { alter: true } is safer for development as it tries to update tables without dropping them.
-        await sequelize.sync({ alter: true });
-        console.log('All models were synchronized successfully.');
+    // Sync all defined models to the DB.
+    // This creates the table if it doesn't exist (and does nothing if it already exists).
+    await sequelize.sync(); 
+    console.log('All models were synchronized successfully.');
 
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
+    // Start the Express server only after the database is ready
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
 
-    } catch (error) {
-        console.error('Unable to connect to the database or start the server:', error);
-        process.exit(1); // Exit the process with an error code
-    }
+  } catch (error) {
+    console.error('Unable to connect to the database or start the server:', error);
+    process.exit(1); // Exit process with failure
+  }
 };
 
+// Start the server
 startServer();
